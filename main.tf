@@ -6,8 +6,8 @@ provider "aws" {
 
 resource "aws_instance" "ApacheWebServer" {
   ami                         = "ami-0eaf7c3456e7b5b68" // Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type ami-0eaf7c3456e7b5b68 (64-bit (x86))
-  instance_type               = "t2.micro"
-  vpc_security_group_ids      = [aws_security_group.webAPACHE.id]
+  instance_type               = var.instance_size
+  vpc_security_group_ids      = [module.web_security_group.security_group_id]
   user_data_replace_on_change = true # This need to added!
   user_data                   = file("httpd.sh")
   tags = {
@@ -17,38 +17,13 @@ resource "aws_instance" "ApacheWebServer" {
   }
 }
 
-resource "aws_security_group" "webAPACHE" {
-  name        = "WebServer"
-  description = "Security Group for my WebServer"
 
 
-  # ingress = to server whilst, egress = from
-  ingress {
-    description = "Allow port HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+module "web_security_group" {
+  source = "./Modules/Security-groups/"
 
-  ingress {
-    description = "Allow port HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  security_group_name        = "WebServer"
+  security_group_description = "Security Group for my WebServer"
+  security_group_owner       = "Hoo"
 
-  egress {
-    description = "Allow ALL ports"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name  = "WebServer Apache by Terraform"
-    Owner = "Vlad"
-  }
 }
